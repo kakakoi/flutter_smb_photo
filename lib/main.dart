@@ -2,13 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:libdsm/libdsm.dart';
 import 'package:flutter_smb_photo/LoginView.dart';
+import 'package:flutter_smb_photo/smb.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-void main() => runApp(new MaterialApp(
-  title: "routes",
-  routes: <String, WidgetBuilder>{
-    '/': (_) => new MyApp(),
-  },
-));
+Box<String> box;
+
+void main() async {
+  await Hive.initFlutter();
+  box = await Hive.openBox<String>('database');
+  runApp(new MaterialApp(
+    title: "routes",
+    routes: <String, WidgetBuilder>{
+      '/': (_) => new MyApp(),
+    },
+  ));
+}
 
 const String dnsNotFound = "Not Found";
 
@@ -51,6 +60,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<String> _inverse(String address) async {
+    box.put('address', address);
     return dsm.inverse(address);
   }
 
@@ -114,6 +124,7 @@ class _MyAppState extends State<MyApp> {
           _dns = value;
           _existDns = true;
         }
+        box.put('dns', _dns);
         setState(() {
           _isLoading = false;
         });
@@ -173,6 +184,15 @@ class _MyAppState extends State<MyApp> {
                       MaterialPageRoute(builder: (context)=>LoginView(),)
                   )
                 }, child: Text(_dns))
+            ),
+            Visibility(
+                visible: _existDns,
+                child: ElevatedButton(onPressed: () => {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context)=>Smb(),)
+                  )
+                }, child: Text("Check! $_dns"))
             )
           ],
         ),
